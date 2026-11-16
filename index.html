@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Arcade</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #f4f6f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #222;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        nav {
+            background-color: #1e293b;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        nav button {
+            background-color: transparent;
+            color: #f8fafc;
+            border: 1px solid #475569;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        nav button:hover {
+            background-color: #334155;
+            border-color: #94a3b8;
+        }
+
+        .page {
+            display: none;
+            padding: 30px 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        h1 {
+            color: #0f172a;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        p {
+            color: #475569;
+            font-size: 16px;
+            margin-top: 0;
+        }
+
+        .stats-container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #334155;
+            margin: 20px 0;
+        }
+
+        /* Game 1: Target Click */
+        .game-box {
+            width: 500px;
+            max-width: 100%;
+            height: 380px;
+            background-color: #ffffff;
+            border: 2px solid #cbd5e1;
+            margin: 15px auto;
+            position: relative;
+            cursor: crosshair;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .target-circle {
+            width: 48px;
+            height: 48px;
+            background-color: #ef4444;
+            border: 4px solid #fecaca;
+            border-radius: 50%;
+            position: absolute;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+            transition: transform 0.05s;
+        }
+
+        .target-circle:active {
+            transform: scale(0.92);
+        }
+
+        /* Game 2: Memory Grid */
+        .memory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            width: 420px;
+            max-width: 100%;
+            margin: 20px auto;
+        }
+
+        .card-tile {
+            height: 85px;
+            background-color: #3b82f6;
+            color: #ffffff;
+            border-radius: 8px;
+            font-size: 22px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+            transition: background-color 0.2s;
+        }
+
+        .card-tile:hover {
+            background-color: #2563eb;
+        }
+
+        .card-tile.flipped {
+            background-color: #ffffff;
+            color: #0f172a;
+            border: 2px solid #cbd5e1;
+        }
+
+        /* Game 3 & 4 Quiz Boxes */
+        .quiz-box {
+            width: 460px;
+            max-width: 100%;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin: 20px auto;
+            padding: 35px 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .big-prompt {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 28px;
+            letter-spacing: 1px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .message {
+            font-size: 18px;
+            font-weight: 600;
+            color: #dc2626;
+            min-height: 28px;
+            margin: 12px 0;
+        }
+
+        .buttons-container {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        button {
+            background-color: #0f172a;
+            color: #ffffff;
+            border: none;
+            padding: 10px 22px;
+            font-size: 15px;
+            font-family: inherit;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #334155;
+        }
+
+        button:disabled {
+            background-color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .options-grid button {
+            background-color: #f1f5f9;
+            color: #0f172a;
+            border: 1px solid #cbd5e1;
+            padding: 14px;
+            font-size: 18px;
+        }
+
+        .options-grid button:hover {
+            background-color: #e2e8f0;
+        }
+
+        /* Home Menu Cards */
+        .menu-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 35px;
+        }
+
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .card h2 {
+            font-size: 20px;
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #0f172a;
+        }
+
+        .card p {
+            font-size: 14px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <button onclick="showPage('home')">Home</button>
+        <button onclick="showPage('game1')">Target Click</button>
+        <button onclick="showPage('game2')">Memory Match</button>
+        <button onclick="showPage('game3')">Math Rush</button>
+        <button onclick="showPage('game4')">Color Trap</button>
+    </nav>
+
+    <!-- HOME -->
+    <div id="home" class="page active">
+        <h1>Mini Arcade</h1>
+        <p>Select a game below to start playing.</p>
+        <div class="menu-cards">
+            <div class="card">
+                <div>
+                    <h2>Target Click</h2>
+                    <p>Test your reflexes by clicking the moving target as many times as possible in 30 seconds.</p>
+                </div>
+                <button onclick="showPage('game1')">Play</button>
+            </div>
+            <div class="card">
+                <div>
+                    <h2>Memory Match</h2>
+                    <p>Flip the tiles and match all six pairs of numbers before the clock runs out.</p>
+                </div>
+                <button onclick="showPage('game2')">Play</button>
+            </div>
+            <div class="card">
+                <div>
+                    <h2>Math Rush</h2>
+                    <p>Solve addition and multiplication problems quickly against the timer.</p>
+                </div>
+                <button onclick="showPage('game3')">Play</button>
+            </div>
+            <div class="card">
+                <div>
+                    <h2>Color Trap</h2>
+                    <p>Select the button that matches the font color, ignoring what the word actually says.</p>
+                </div>
+                <button onclick="showPage('game4')">Play</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GAME 1: TARGET CLICK -->
+    <div id="game1" class="page">
+        <h1>Target Click</h1>
+        <p>Click the red target as fast as you can.</p>
+        <div class="stats-container">
+            <div>Score: <span id="g1-score">0</span></div>
+            <div>Time left: <span id="g1-timer">30</span>s</div>
+        </div>
+        <div id="g1-box" class="game-box">
+            <div id="g1-target" class="target-circle" style="top: 150px; left: 200px;"></div>
+        </div>
+        <div id="g1-msg" class="message"></div>
+        <div class="buttons-container">
+            <button id="g1-pause" onclick="g1TogglePause()">Pause</button>
+            <button onclick="g1Restart()">Start over</button>
+        </div>
+    </div>
+
+    <!-- GAME 2: MEMORY MATCH -->
+    <div id="game2" class="page">
+        <h1>Memory Match</h1>
+        <p>Find all matching pairs before time runs out.</p>
+        <div class="stats-container">
+            <div>Pairs: <span id="g2-score">0</span>/6</div>
+            <div>Time left: <span id="g2-timer">30</span>s</div>
+        </div>
+        <div id="memory-grid" class="memory-grid"></div>
+        <div id="g2-msg" class="message"></div>
+        <div class="buttons-container">
+            <button id="g2-pause" onclick="g2TogglePause()">Pause</button>
+            <button onclick="g2Restart()">Start over</button>
+        </div>
+    </div>
+
+    <!-- GAME 3: MATH RUSH -->
+    <div id="game3" class="page">
+        <h1>Math Rush</h1>
+        <p>Choose the correct answer for each equation.</p>
+        <div class="stats-container">
+            <div>Score: <span id="g3-score">0</span></div>
+            <div>Time left: <span id="g3-timer">30</span>s</div>
+        </div>
+        <div id="g3-box" class="quiz-box">
+            <div id="math-question" class="big-prompt">5 + 3 = ?</div>
+            <div id="math-options" class="options-grid"></div>
+        </div>
+        <div id="g3-msg" class="message"></div>
+        <div class="buttons-container">
+            <button id="g3-pause" onclick="g3TogglePause()">Pause</button>
+            <button onclick="g3Restart()">Start over</button>
+        </div>
+    </div>
+
+    <!-- GAME 4: COLOR TRAP -->
+    <div id="game4" class="page">
+        <h1>Color Trap</h1>
+        <p>Click the button that matches the <strong>text color</strong>, not the written word.</p>
+        <div class="stats-container">
+            <div>Score: <span id="g4-score">0</span></div>
+            <div>Time left: <span id="g4-timer">30</span>s</div>
+        </div>
+        <div id="g4-box" class="quiz-box">
+            <div id="color-word" class="big-prompt">RED</div>
+            <div class="options-grid">
+                <button onclick="checkColor('RED')">RED</button>
+                <button onclick="checkColor('BLUE')">BLUE</button>
+                <button onclick="checkColor('GREEN')">GREEN</button>
+                <button onclick="checkColor('PURPLE')">PURPLE</button>
+            </div>
+        </div>
+        <div id="g4-msg" class="message"></div>
+        <div class="buttons-container">
+            <button id="g4-pause" onclick="g4TogglePause()">Pause</button>
+            <button onclick="g4Restart()">Start over</button>
+        </div>
+    </div>
+
+    <script>
+        let g1Int, g2Int, g3Int, g4Int;
+
+        function stopAll() {
+            clearInterval(g1Int);
+            clearInterval(g2Int);
+            clearInterval(g3Int);
+            clearInterval(g4Int);
+        }
+
+        function showPage(pageId) {
+            stopAll();
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+
+            if (pageId === 'game1') g1Restart();
+            if (pageId === 'game2') g2Restart();
+            if (pageId === 'game3') g3Restart();
+            if (pageId === 'game4') g4Restart();
+        }
+
+        // ================= GAME 1: TARGET CLICK =================
+        let g1Score = 0, g1Time = 30, g1Active = true, g1Paused = false;
+        const g1Target = document.getElementById("g1-target");
+        const g1Box = document.getElementById("g1-box");
+
+        function g1Move() {
+            const maxX = g1Box.clientWidth - 52;
+            const maxY = g1Box.clientHeight - 52;
+            g1Target.style.left = Math.floor(Math.random() * maxX) + "px";
+            g1Target.style.top = Math.floor(Math.random() * maxY) + "px";
+        }
+
+        g1Target.onclick = () => {
+            if (!g1Active || g1Paused) return;
+            g1Score++;
+            document.getElementById("g1-score").innerText = g1Score;
+            g1Move();
+        };
+
+        function g1TogglePause() {
+            if (!g1Active) return;
+            g1Paused = !g1Paused;
+            document.getElementById("g1-pause").innerText = g1Paused ? "Resume" : "Pause";
+            g1Target.style.display = g1Paused ? "none" : "block";
+            document.getElementById("g1-msg").innerText = g1Paused ? "Game Paused" : "";
+        }
+
+        function g1Restart() {
+            clearInterval(g1Int);
+            g1Score = 0; g1Time = 30; g1Active = true; g1Paused = false;
+            document.getElementById("g1-score").innerText = 0;
+            document.getElementById("g1-timer").innerText = 30;
+            document.getElementById("g1-msg").innerText = "";
+            document.getElementById("g1-pause").innerText = "Pause";
+            document.getElementById("g1-pause").disabled = false;
+            g1Target.style.display = "block";
+            g1Move();
+
+            g1Int = setInterval(() => {
+                if (!g1Paused) {
+                    g1Time--;
+                    document.getElementById("g1-timer").innerText = g1Time;
+                    if (g1Time <= 0) {
+                        clearInterval(g1Int);
+                        g1Active = false;
+                        g1Target.style.display = "none";
+                        document.getElementById("g1-pause").disabled = true;
+                        document.getElementById("g1-msg").innerText = "Time is up. Final score: " + g1Score;
+                    }
+                }
+            }, 1000);
+        }
+
+        // ================= GAME 2: MEMORY MATCH =================
+        let g2Pairs = 0, g2Time = 30, g2Active = true, g2Paused = false;
+        let flippedCards = [], lockBoard = false;
+        const symbols = ['1', '2', '3', '4', '5', '6'];
+
+        function g2Restart() {
+            clearInterval(g2Int);
+            g2Pairs = 0; g2Time = 30; g2Active = true; g2Paused = false;
+            flippedCards = []; lockBoard = false;
+
+            document.getElementById("g2-score").innerText = 0;
+            document.getElementById("g2-timer").innerText = 30;
+            document.getElementById("g2-msg").innerText = "";
+            document.getElementById("g2-pause").innerText = "Pause";
+            document.getElementById("g2-pause").disabled = false;
+
+            const grid = document.getElementById("memory-grid");
+            grid.innerHTML = "";
+            grid.style.visibility = "visible";
+
+            let deck = [...symbols, ...symbols].sort(() => Math.random() - 0.5);
+            deck.forEach(item => {
+                const tile = document.createElement("div");
+                tile.className = "card-tile";
+                tile.dataset.symbol = item;
+                tile.innerText = "?";
+                tile.onclick = () => flipTile(tile);
+                grid.appendChild(tile);
+            });
+
+            g2Int = setInterval(() => {
+                if (!g2Paused) {
+                    g2Time--;
+                    document.getElementById("g2-timer").innerText = g2Time;
+                    if (g2Time <= 0) {
+                        clearInterval(g2Int);
+                        g2Active = false;
+                        document.getElementById("g2-pause").disabled = true;
+                        document.getElementById("g2-msg").innerText = "Time is up. Pairs found: " + g2Pairs + "/6";
+                    }
+                }
+            }, 1000);
+        }
+
+        function flipTile(tile) {
+            if (!g2Active || g2Paused || lockBoard || tile.classList.contains("flipped")) return;
+
+            tile.classList.add("flipped");
+            tile.innerText = tile.dataset.symbol;
+            flippedCards.push(tile);
+
+            if (flippedCards.length === 2) {
+                lockBoard = true;
+                const [c1, c2] = flippedCards;
+                if (c1.dataset.symbol === c2.dataset.symbol) {
+                    g2Pairs++;
+                    document.getElementById("g2-score").innerText = g2Pairs;
+                    flippedCards = [];
+                    lockBoard = false;
+                    if (g2Pairs === 6) {
+                        clearInterval(g2Int);
+                        g2Active = false;
+                        document.getElementById("g2-pause").disabled = true;
+                        document.getElementById("g2-msg").innerText = "Completed with " + g2Time + "s remaining.";
+                    }
+                } else {
+                    setTimeout(() => {
+                        c1.classList.remove("flipped");
+                        c2.classList.remove("flipped");
+                        c1.innerText = "?";
+                        c2.innerText = "?";
+                        flippedCards = [];
+                        lockBoard = false;
+                    }, 600);
+                }
+            }
+        }
+
+        function g2TogglePause() {
+            if (!g2Active) return;
+            g2Paused = !g2Paused;
+            document.getElementById("g2-pause").innerText = g2Paused ? "Resume" : "Pause";
+            document.getElementById("memory-grid").style.visibility = g2Paused ? "hidden" : "visible";
+            document.getElementById("g2-msg").innerText = g2Paused ? "Game Paused" : "";
+        }
+
+        // ================= GAME 3: MATH RUSH =================
+        let g3Score = 0, g3Time = 30, g3Active = true, g3Paused = false, correctAnswer = 0;
+
+        function newMathQuestion() {
+            const a = Math.floor(Math.random() * 12) + 1;
+            const b = Math.floor(Math.random() * 12) + 1;
+            const isMultiply = Math.random() > 0.5;
+
+            if (isMultiply) {
+                correctAnswer = a * b;
+                document.getElementById("math-question").innerText = `${a} × ${b} = ?`;
+            } else {
+                correctAnswer = a + b;
+                document.getElementById("math-question").innerText = `${a} + ${b} = ?`;
+            }
+
+            let options = new Set([correctAnswer]);
+            while (options.size < 4) {
+                let fake = correctAnswer + (Math.floor(Math.random() * 10) - 5);
+                if (fake > 0 && fake !== correctAnswer) options.add(fake);
+            }
+
+            const container = document.getElementById("math-options");
+            container.innerHTML = "";
+            Array.from(options).sort(() => Math.random() - 0.5).forEach(opt => {
+                const btn = document.createElement("button");
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    if (!g3Active || g3Paused) return;
+                    if (opt === correctAnswer) {
+                        g3Score++;
+                        document.getElementById("g3-score").innerText = g3Score;
+                    }
+                    newMathQuestion();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function g3TogglePause() {
+            if (!g3Active) return;
+            g3Paused = !g3Paused;
+            document.getElementById("g3-pause").innerText = g3Paused ? "Resume" : "Pause";
+            document.getElementById("g3-box").style.visibility = g3Paused ? "hidden" : "visible";
+            document.getElementById("g3-msg").innerText = g3Paused ? "Game Paused" : "";
+        }
+
+        function g3Restart() {
+            clearInterval(g3Int);
+            g3Score = 0; g3Time = 30; g3Active = true; g3Paused = false;
+            document.getElementById("g3-score").innerText = 0;
+            document.getElementById("g3-timer").innerText = 30;
+            document.getElementById("g3-msg").innerText = "";
+            document.getElementById("g3-pause").innerText = "Pause";
+            document.getElementById("g3-pause").disabled = false;
+            document.getElementById("g3-box").style.visibility = "visible";
+            newMathQuestion();
+
+            g3Int = setInterval(() => {
+                if (!g3Paused) {
+                    g3Time--;
+                    document.getElementById("g3-timer").innerText = g3Time;
+                    if (g3Time <= 0) {
+                        clearInterval(g3Int);
+                        g3Active = false;
+                        document.getElementById("g3-pause").disabled = true;
+                        document.getElementById("g3-msg").innerText = "Time is up. Final score: " + g3Score;
+                    }
+                }
+            }, 1000);
+        }
+
+        // ================= GAME 4: COLOR TRAP =================
+        let g4Score = 0, g4Time = 30, g4Active = true, g4Paused = false, currentInkColor = "";
+        const colors = [
+            { name: "RED", hex: "#dc2626" },
+            { name: "BLUE", hex: "#2563eb" },
+            { name: "GREEN", hex: "#16a34a" },
+            { name: "PURPLE", hex: "#9333ea" }
+        ];
+
+        function nextColorTrap() {
+            const wordObj = colors[Math.floor(Math.random() * colors.length)];
+            const inkObj = colors[Math.floor(Math.random() * colors.length)];
+            currentInkColor = inkObj.name;
+
+            const display = document.getElementById("color-word");
+            display.innerText = wordObj.name;
+            display.style.color = inkObj.hex;
+        }
+
+        function checkColor(selectedColor) {
+            if (!g4Active || g4Paused) return;
+            if (selectedColor === currentInkColor) {
+                g4Score++;
+            } else {
+                g4Score = Math.max(0, g4Score - 1);
+            }
+            document.getElementById("g4-score").innerText = g4Score;
+            nextColorTrap();
+        }
+
+        function g4TogglePause() {
+            if (!g4Active) return;
+            g4Paused = !g4Paused;
+            document.getElementById("g4-pause").innerText = g4Paused ? "Resume" : "Pause";
+            document.getElementById("g4-box").style.visibility = g4Paused ? "hidden" : "visible";
+            document.getElementById("g4-msg").innerText = g4Paused ? "Game Paused" : "";
+        }
+
+        function g4Restart() {
+            clearInterval(g4Int);
+            g4Score = 0; g4Time = 30; g4Active = true; g4Paused = false;
+            document.getElementById("g4-score").innerText = 0;
+            document.getElementById("g4-timer").innerText = 30;
+            document.getElementById("g4-msg").innerText = "";
+            document.getElementById("g4-pause").innerText = "Pause";
+            document.getElementById("g4-pause").disabled = false;
+            document.getElementById("g4-box").style.visibility = "visible";
+            nextColorTrap();
+
+            g4Int = setInterval(() => {
+                if (!g4Paused) {
+                    g4Time--;
+                    document.getElementById("g4-timer").innerText = g4Time;
+                    if (g4Time <= 0) {
+                        clearInterval(g4Int);
+                        g4Active = false;
+                        document.getElementById("g4-pause").disabled = true;
+                        document.getElementById("g4-msg").innerText = "Time is up. Final score: " + g4Score;
+                    }
+                }
+            }, 1000);
+        }
+    </script>
+
+</body>
+</html>
+
+
+
